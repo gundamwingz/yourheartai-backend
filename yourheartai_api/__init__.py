@@ -19,8 +19,6 @@ login_manager = LoginManager()
 login_manager.login_view = 'users.login'
 login_manager.login_message_category = 'info'
 
-
-
 mail = Mail()
 cors = CORS(resources={r'/api/yha/*': {'origins':'http://localhost:4401'}})
 def create_app(config_class=Config):
@@ -43,11 +41,13 @@ def create_app(config_class=Config):
     from yourheartai_api.users.routes import users
     from yourheartai_api.posts.routes import posts
     from yourheartai_api.main.routes import main
+    from yourheartai_api.ai_models.routes import ai_models
     from yourheartai_api.errors.handlers import errors
     _api = Api(app)
     _api.register_blueprint(users)
     _api.register_blueprint(posts)
     _api.register_blueprint(main)
+    _api.register_blueprint(ai_models)
     _api.register_blueprint(errors)
 
     # app.register_blueprint(users)
