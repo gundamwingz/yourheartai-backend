@@ -182,7 +182,8 @@ class UserAccount(MethodView):
     def get(self):    
         current_user_id = get_jwt_identity()
         user = User.query.filter_by(id=current_user_id).first() 
-        current_user_jwt = user        
+        current_user_jwt = user  
+              
         id  = current_user_jwt.id
 
         username  = current_user_jwt.username        

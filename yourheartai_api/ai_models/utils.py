@@ -7,7 +7,7 @@ from tensorflow import keras
 from keras.layers import Dense
 from keras.models import Sequential, load_model
             
-def getPrediction(filename):
+def getCancerPrediction(filename):
     
     classes = ['Actinic keratoses', 'Basal cell carcinoma', 
                'Benign keratosis-like lesions', 'Dermatofibroma', 'Melanoma', 
@@ -21,7 +21,7 @@ def getPrediction(filename):
     my_model=load_model("model/cancer/HAM10000_100epochs.h5")
     
     SIZE = 32 #Resize to same size as training images
-    img_path = 'static/images/'+filename
+    img_path = 'yourheartai_api/static/ai_images/cancer/'+filename
     img = np.asarray(Image.open(img_path).resize((SIZE,SIZE)))
     
     img = img/255.      #Scale pixel values
