@@ -129,6 +129,12 @@ class GetCancerPrediction(MethodView):
                 return response, 200
         except:
             return jsonify("Failed"), 500
+        
+@ai_models.route("/prediction/cancer", methods=["POST"])
+class GetCHDPrediction(MethodView):
+    @jwt_required()
+    def post(self):
+        now = datetime.now() # current date and time
 
-
+        return
            
