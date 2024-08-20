@@ -1,0 +1,2 @@
+change to package directory --> ../.../Mask-RCNN_TF2.14.0
+then install setup.py --> python setup.py install

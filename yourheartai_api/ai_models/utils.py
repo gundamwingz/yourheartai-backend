@@ -10,6 +10,26 @@ from keras.models import Sequential, load_model
 import pandas as pd
 from pandas import read_csv
 
+##mask r-cnn imports
+# evaluate the mask rcnn model on the stenosis dataset
+import mrcnn
+from matplotlib import pyplot
+from matplotlib.patches import Rectangle
+from mrcnn.config import Config
+
+from os import listdir
+from xml.etree import ElementTree
+from numpy import zeros
+from numpy import asarray
+from numpy import expand_dims
+from numpy import mean
+from mrcnn.config import Config
+from mrcnn.model import MaskRCNN
+from mrcnn.utils import Dataset
+from mrcnn.utils import compute_ap
+from mrcnn.model import load_image_gt
+from mrcnn.model import mold_image
+import cv2    
 
             
 def getCancerPrediction(filename):
@@ -39,6 +59,54 @@ def getCancerPrediction(filename):
     pred_class = le.inverse_transform([np.argmax(pred)])[0]
     print("Diagnosis is:", pred_class)
     return pred_class
+
+def getStenosisPrediction(filename):
+    LOGS_DIR = "model\logs"
+    MODEL_DIR = "model\cvd\stenosis_mask_r-cnn\Stenosis_mrcnn_train-6661s-832v-100spe-10e.h5"
+    IMAGE_DIR = ""
+    # load the class label names from disk, one label per line
+    CLASS_NAMES = ['BG', 'stenosis']
+
+    class StenosisPredConfig(mrcnn.config.Config):
+        # Give the configuration a recognizable name
+        NAME = "stenosis_inference"
+
+        # set the number of GPUs to use along with cthe number of images per GPU
+        GPU_COUNT = 1
+        IMAGES_PER_GPU = 1
+
+        # Number of classes = number of classes + 1 (+1 for the background). The background class is named BG
+        NUM_CLASSES = len(CLASS_NAMES)
+        USE_MINI_MASK = False
+        DETECTION_MIN_CONFIDENCE = 0.6
+
+    # Create Prediction Config
+    predCfg = StenosisPredConfig()
+    # predCfg.display()C
+
+    # Initialize the Mask R-CNN model for inference and then load the weights.
+    # This step builds the Keras model architecture.
+    model = mrcnn.model.MaskRCNN(mode="inference",
+                                config=predCfg,
+                                model_dir=LOGS_DIR)
+    # Load the weights into the model.
+    model.load_weights(MODEL_DIR, by_name=True)
+    
+    # load the input image, convert it from BGR to RGB channel
+    image = cv2.imread(IMAGE_DIR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # Perform a forward pass of the network to obtain the results
+    r = model.detect([image], verbose=0)
+    # Get the results for the first image.
+    r = r[0]
+
+    #Save Output Images
+    ## See solution here: github.com/matterport/Mask_RCNN/issues/134
+
+    patient_sten_pred_dict = {}
+    return patient_sten_pred_dict
+
 
 
 def getCHDPrediction(patientData): 
