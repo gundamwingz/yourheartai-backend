@@ -62,7 +62,7 @@ def getCancerPrediction(filename):
 
 def getStenosisPrediction(filename):
     LOGS_DIR = "model\logs"
-    MODEL_DIR = "model\cvd\stenosis_mask_r-cnn\Stenosis_mrcnn_train-6661s-832v-100spe-10e.h5"
+    MODEL_DIR = "model\cvd\stn_m_rcnn\Stenosis_mrcnn_train-6661s-832v-100spe-10e.h5"
     IMAGE_DIR = ""
     # load the class label names from disk, one label per line
     CLASS_NAMES = ['BG', 'stenosis']
