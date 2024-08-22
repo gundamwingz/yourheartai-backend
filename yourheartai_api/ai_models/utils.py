@@ -17,6 +17,7 @@ from matplotlib import pyplot
 from matplotlib.patches import Rectangle
 from mrcnn.config import Config
 
+import os
 from os import listdir
 from xml.etree import ElementTree
 from numpy import zeros
@@ -30,40 +31,14 @@ from mrcnn.utils import compute_ap
 from mrcnn.model import load_image_gt
 from mrcnn.model import mold_image
 import cv2    
+import skimage
 
-            
-def getCancerPrediction(filename):
-    
-    classes = ['Actinic keratoses', 'Basal cell carcinoma', 
-               'Benign keratosis-like lesions', 'Dermatofibroma', 'Melanoma', 
-               'Melanocytic nevi', 'Vascular lesions']
-    le = LabelEncoder()
-    le.fit(classes)
-    le.inverse_transform([2])
-    
-    
-    #Load model
-    my_model=load_model("model/cancer/HAM10000_100epochs.h5")
-    
-    SIZE = 32 #Resize to same size as training images
-    img_path = 'yourheartai_api/static/ai_images/cancer/'+filename
-    img = np.asarray(Image.open(img_path).resize((SIZE,SIZE)))
-    
-    img = img/255.      #Scale pixel values
-    
-    img = np.expand_dims(img, axis=0)  #Get it tready as input to the network       
-    
-    pred = my_model.predict(img) #Predict                    
-    
-    #Convert prediction to class name
-    pred_class = le.inverse_transform([np.argmax(pred)])[0]
-    print("Diagnosis is:", pred_class)
-    return pred_class
 
 def getStenosisPrediction(filename):
-    LOGS_DIR = "model\logs"
-    MODEL_DIR = "model\cvd\stn_m_rcnn\Stenosis_mrcnn_train-6661s-832v-100spe-10e.h5"
-    IMAGE_DIR = ""
+    LOGS_DIR = "model/logs"
+    MODEL_DIR = "model/cvd/stn_m_rcnn/Stenosis_mrcnn_train-6661s-832v-100spe-10e.h5"
+    IMAGE_DIR = 'yourheartai_api/static/ai_images/chd-mrcnn/raw/'
+    SAVE_RES_DIR = "yourheartai_api/static/ai_images/chd-mrcnn/results"
     # load the class label names from disk, one label per line
     CLASS_NAMES = ['BG', 'stenosis']
 
@@ -82,7 +57,7 @@ def getStenosisPrediction(filename):
 
     # Create Prediction Config
     predCfg = StenosisPredConfig()
-    # predCfg.display()C
+    # predCfg.display()
 
     # Initialize the Mask R-CNN model for inference and then load the weights.
     # This step builds the Keras model architecture.
@@ -96,16 +71,40 @@ def getStenosisPrediction(filename):
     image = cv2.imread(IMAGE_DIR)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # Perform a forward pass of the network to obtain the results
-    r = model.detect([image], verbose=0)
-    # Get the results for the first image.
-    r = r[0]
 
     #Save Output Images
     ## See solution here: https://github.com/matterport/Mask_RCNN/pull/38
-    ## implemented save_image visualize.py
+    ## Implemented save_image visualize.py
+    ## To correctly install m-rcnn, see notes - mask-rcnn dependecies notes.txt
+    
+    SIZE = 512 #Resize to same size as training images
+    img_path = IMAGE_DIR+filename
+    # image = np.asarray(Image.open(img_path).resize((SIZE,SIZE)))
+    image = skimage.io.imread(os.path.join(img_path)).resize((SIZE,SIZE))
+    image_name = filename
 
-    patient_sten_pred_dict = {}
+    # Perform a forward pass of the network to obtain the results
+    # r = model.detect([image], verbose=0)    
+    results = model.detect([image], verbose=1)
+    # Get the results for the first image.
+    r = results[0]
+
+    mrcnn.visualize.save_image(
+        image, 
+        image_name, 
+        r['rois'], 
+        r['masks'],
+        r['class_ids'],
+        r['scores'],
+        CLASS_NAMES,
+        scores_thresh=0.6,
+        save_dir=SAVE_RES_DIR,
+        mode=0)
+
+    result_img_url = SAVE_RES_DIR+image_name
+    patient_sten_pred_dict = {
+        "results_img_url": result_img_url
+    }
     return patient_sten_pred_dict
 
 
@@ -170,3 +169,32 @@ def getCHDPrediction(patientData):
         }
     
     return patient_pred_dict
+
+
+def getCancerPrediction(filename):
+    
+    classes = ['Actinic keratoses', 'Basal cell carcinoma', 
+               'Benign keratosis-like lesions', 'Dermatofibroma', 'Melanoma', 
+               'Melanocytic nevi', 'Vascular lesions']
+    le = LabelEncoder()
+    le.fit(classes)
+    le.inverse_transform([2])
+    
+    
+    #Load model
+    my_model=load_model("model/cancer/HAM10000_100epochs.h5")
+    
+    SIZE = 32 #Resize to same size as training images
+    img_path = 'yourheartai_api/static/ai_images/cancer/'+filename
+    img = np.asarray(Image.open(img_path).resize((SIZE,SIZE)))
+    
+    img = img/255.      #Scale pixel values
+    
+    img = np.expand_dims(img, axis=0)  #Get it tready as input to the network       
+    
+    pred = my_model.predict(img) #Predict                    
+    
+    #Convert prediction to class name
+    pred_class = le.inverse_transform([np.argmax(pred)])[0]
+    print("Diagnosis is:", pred_class)
+    return pred_class
