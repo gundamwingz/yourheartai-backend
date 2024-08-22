@@ -102,7 +102,8 @@ def getStenosisPrediction(filename):
     r = r[0]
 
     #Save Output Images
-    ## See solution here: github.com/matterport/Mask_RCNN/issues/134
+    ## See solution here: https://github.com/matterport/Mask_RCNN/pull/38
+    ## implemented save_image visualize.py
 
     patient_sten_pred_dict = {}
     return patient_sten_pred_dict

@@ -1,2 +1,6 @@
-change to package directory --> ../.../Mask-RCNN_TF2.14.0
-then install setup.py --> python setup.py install
+Step1. change to package directory --> ../.../Mask-RCNN_TF2.14.0
+Step2. then install setup.py --> python setup.py install
+
+Step3. ##### Replace visualize.py in .egg file #####
+find "mask_rcnn_tf2-1.0-py3.10.egg" file in site packages folder: ...\Lib\site-packages
+Replace this file with "mask_rcnn_tf2-1.0-py3.10.egg" file saved in mrcnn_temp folder
