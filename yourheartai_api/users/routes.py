@@ -306,6 +306,13 @@ class UserAccountImage(MethodView):
         current_user_id = get_jwt_identity()
         current_user_jwt  = User.query.filter_by(id=current_user_id).first() 
 
+        # print("working dir: ",os.getcwd())
+        profile_pics_dir = "./yourheartai_api/static/profile_pics"
+        if not os.path.exists(profile_pics_dir):
+            os.makedirs(profile_pics_dir)
+
+        print("profile_pics_dir: ",profile_pics_dir)
+            
         image_file = url_for('static', filename='profile_pics/' + current_user_jwt.image_file)
         print("image_file: ",image_file)
         

@@ -13,6 +13,7 @@ ssl/
 setup.py
 yourheartai_api/static/profile_pics/*
 yourheartai_api/static/ai_images/*
+yourheartai_api/ai_models/cvd/stn_m_rcnn/*
 instance/
 logs/
 certs/

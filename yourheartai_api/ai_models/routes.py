@@ -26,6 +26,15 @@ class GetCvdCnnPrediction(MethodView):
     # @ai_models.arguments(YHANewPostSchema, location="query")    
     def post(self):
         print("Routing working")
+
+        
+        # ai_img_raw_dir = "./yourheartai_api/static/ai_images/chd-mrcnn/raw"
+        # ai_img_res_dir = "./yourheartai_api/static/ai_images/chd-mrcnn/results"
+        # if not os.path.exists(ai_img_raw_dir):
+        #     os.makedirs(ai_img_raw_dir)
+        # if not os.path.exists(ai_img_res_dir):
+        #     os.makedirs(ai_img_res_dir)
+
         current_user_id = get_jwt_identity()
         user = User.query.filter_by(id=current_user_id).first() 
         current_user_jwt = user 
@@ -42,54 +51,111 @@ class GetCvdCnnPrediction(MethodView):
         # db.session.commit()   
 
         ########## Random Boiler Plate Code Ends ##########
-   
-        try:            
-            if 'file' not in request.files:
-                response = jsonify('No file part')
-                return response, 403
-            file = request.files['file']
-            if file.filename == '':
-                response = jsonify('No file selected for uploading')
-                return response, 403
-            if file:
-                aiFilename = secure_filename(file.filename)  #Use this werkzeug method to secure filename. 
-                path = current_app.root_path+'\\static\\ai_images\\chd-mrcnn\\raw'
+
+        if 'file' not in request.files:
+            response = jsonify('No file part')
+            return response, 403
+        file = request.files['file']
+        if file.filename == '':
+            response = jsonify('No file selected for uploading')
+            return response, 403
+        if file:
+            aiFilename = secure_filename(file.filename)  #Use this werkzeug method to secure filename. 
+            path = current_app.root_path+'/static/ai_images/chd-mrcnn/raw'
 
 
-                date_time = now.strftime("%Y%m%d_%H%M%S")
-                print("date and time:",date_time)
+            date_time = now.strftime("%Y%m%d_%H%M%S")
+            print("date and time:",date_time)
+        
+            f_name, f_ext = os.path.splitext(aiFilename) #underscore used to discard variable
+            aiFilename = f_name +"-"+ date_time + f_ext
+
+            # aiFilename = aiFilename + date_time
+
+            isExist = os.path.exists(path)
+            print("path: ",path)
+            if not isExist:
+                print("makine rcnn dir")
+                os.makedirs(path)
+            elif isExist:                
+                file.save(os.path.join(current_app.root_path, 'static/ai_images/chd-mrcnn/raw', aiFilename))
+
+
+            print("getStenosisPrediction: getting prediction!")
+            stenPred =  getStenosisPrediction(aiFilename)
+            print("f_ext",f_ext)
+            finalStenPred = stenPred+f_ext
+            print("stenPred w_ext: ",finalStenPred)
+
+            image_file = url_for('static',filename='/ai_images/chd-mrcnn/results/'+stenPred+".jpg")    
+
+            # image_file = url_for('static', filename='/ai_images/chd-mrcnn/raw/' + aiFilename)
             
-                f_name, f_ext = os.path.splitext(aiFilename) #underscore used to discard variable
-                aiFilename = f_name +"-"+ date_time + f_ext
+            resultsJson = {
+                # "prediction": label,
+                "image_url": image_file
+            }
+                            
+            response = jsonify(resultsJson)
+            return response, 200
+   
+        # try:            
+        #     if 'file' not in request.files:
+        #         response = jsonify('No file part')
+        #         return response, 403
+        #     file = request.files['file']
+        #     if file.filename == '':
+        #         response = jsonify('No file selected for uploading')
+        #         return response, 403
+        #     if file:
+        #         aiFilename = secure_filename(file.filename)  #Use this werkzeug method to secure filename. 
+        #         path = current_app.root_path+'/static/ai_images/chd-mrcnn/raw'
 
-                # aiFilename = aiFilename + date_time
 
-                isExist = os.path.exists(path)
-                if not isExist:
-                    os.makedirs(path)
-                elif isExist:                
-                    file.save(os.path.join(current_app.root_path, 'static/ai_images/chd-mrcnn/raw', aiFilename))
+        #         date_time = now.strftime("%Y%m%d_%H%M%S")
+        #         print("date and time:",date_time)
+            
+        #         f_name, f_ext = os.path.splitext(aiFilename) #underscore used to discard variable
+        #         aiFilename = f_name +"-"+ date_time + f_ext
 
-                #getCancerPrediction(filename)
-                # label = getCancerPrediction(aiFilename)
-                stenPred =  getStenosisPrediction(aiFilename)
+        #         # aiFilename = aiFilename + date_time
 
-                image_file = url_for('static', filename='/ai_images/chd-mrcnn/raw/' + aiFilename)
+        #         isExist = os.path.exists(path)
+        #         print("path: ",path)
+        #         if not isExist:
+        #             print("makine rcnn dir")
+        #             os.makedirs(path)
+        #         elif isExist:                
+        #             file.save(os.path.join(current_app.root_path, 'static/ai_images/chd-mrcnn/raw', aiFilename))
+
+        #         #getCancerPrediction(filename)
+        #         # label = getCancerPrediction(aiFilename)
+                    
+        #         print("getStenosisPrediction: getting prediction!")
+        #         stenPred =  getStenosisPrediction(aiFilename)
                 
-                resultsJson = {
-                    # "prediction": label,
-                    "image_url": image_file
-                }
+        #         # print("stenPred: ",stenPred.results_img_url)
+        #         print("stenPred: ",stenPred)
+
+        #         image_file = url_for('static', filename='/ai_images/chd-mrcnn/raw/' + aiFilename)
+                
+        #         resultsJson = {
+        #             # "prediction": label,
+        #             "image_url": image_file
+        #         }
                                 
-                response = jsonify(resultsJson)
-                return response, 200
-        except:
-            return jsonify("Failed"), 500
+        #         response = jsonify(resultsJson)
+        #         return response, 200
+        # except:
+        #     return jsonify("Failed"), 500
 @ai_models.route("/prediction/cancer", methods=["POST"])
 class GetCancerPrediction(MethodView):
     @jwt_required()
-    def post(self):
+    def post(self): 
         now = datetime.now() # current date and time
+
+
+        print("current_app: ",os.path.join(current_app.root_path))
         try:            
             if 'file' not in request.files:
                 response = jsonify('No file part')
@@ -100,7 +166,7 @@ class GetCancerPrediction(MethodView):
                 return response, 403
             if file:
                 aiFilename = secure_filename(file.filename)  #Use this werkzeug method to secure filename. 
-                path = current_app.root_path+'\\static\\ai_images\\cancer'
+                path = current_app.root_path+'/static/ai_images/cancer'
 
 
                 date_time = now.strftime("%Y%m%d_%H%M%S")
@@ -110,7 +176,7 @@ class GetCancerPrediction(MethodView):
                 aiFilename = f_name +"-"+ date_time + f_ext
 
                 # aiFilename = aiFilename + date_time
-
+                print("Testing Cancerdir")
                 isExist = os.path.exists(path)
                 if not isExist:
                     os.makedirs(path)

@@ -35,16 +35,25 @@ import cv2
 import skimage
 import matplotlib.pyplot as plt
 from mrcnn.visualize import save_image
+from flask import url_for, current_app
 
+def getStenosisPrediction(filename):   
+    
+    LOGS_DIR = "./model/logs"
+    # H5_FILENAME = "Stenosis_mrcnn_train-6661s-832v-1000spe-10e.h5"
+    H5_FILENAME = "Stenosis_mrcnn_train-6661s-832v-1000spe-10e.h5"
+    MODEL_DIR = os.path.join(current_app.root_path,"ai_models/cvd/stn_m_rcnn",H5_FILENAME) 
+    print("################################################################################")
+    print("MODEL_DIR: ",MODEL_DIR)
+    print("################################################################################")
+    IMAGE_DIR = os.path.join(current_app.root_path,'static/ai_images/chd-mrcnn/raw/')
+    SAVE_RES_DIR = os.path.join(current_app.root_path,"static/ai_images/chd-mrcnn/results")
 
-def getStenosisPrediction(filename):
-    LOGS_DIR = "model/logs"
-    MODEL_DIR = "model/cvd/stn_m_rcnn/Stenosis_mrcnn_train-6661s-832v-1000spe-10e.h5"
-    IMAGE_DIR = 'yourheartai_api/static/ai_images/chd-mrcnn/raw/'
-    SAVE_RES_DIR = "yourheartai_api/static/ai_images/chd-mrcnn/results"
     # load the class label names from disk, one label per line
     CLASS_NAMES = ['BG', 'stenosis']
 
+
+    print("Setting up config: StenosisPredConfig")
     class StenosisPredConfig(mrcnn.config.Config):
         # Give the configuration a recognizable name
         NAME = "stenosis_inference"
@@ -57,19 +66,26 @@ def getStenosisPrediction(filename):
         # Number of classes = number of classes + 1 (+1 for the background). The background class is named BG
         NUM_CLASSES = len(CLASS_NAMES)
         # USE_MINI_MASK = False
-        DETECTION_MIN_CONFIDENCE = 0.1
+        DETECTION_MIN_CONFIDENCE = 0.6
 
     # Create Prediction Config
     predCfg = StenosisPredConfig()
     # predCfg.display()
 
     # Initialize the Mask R-CNN model for inference and then load the weights.
-    # This step builds the Keras model architecture.
-    DEVICE = "/cpu:0"
-    with tf.device(DEVICE):
-        model = mrcnn.model.MaskRCNN(mode="inference",
+    # This step builds the Keras model architecture. USE CPU for inference
+    # DEVICE = "/cpu:0"
+    # with tf.device(DEVICE):
+        # model = mrcnn.model.MaskRCNN(mode="inference",
+        #                             config=predCfg,
+        #                             model_dir=LOGS_DIR)
+    
+    print("Generating inference model")
+    model = mrcnn.model.MaskRCNN(mode="inference",
                                     config=predCfg,
                                     model_dir=LOGS_DIR)
+    
+    print("Loading weights")
     # Load the weights into the model.
     model.load_weights(MODEL_DIR, by_name=True)
     
@@ -77,54 +93,49 @@ def getStenosisPrediction(filename):
     # image = cv2.imread(IMAGE_DIR)
     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-
-
-
-
-
-
-
-    print("About to run Inference")
-
+    print("Beginning Inference")
     #Save Output Images
     ## See solution here: https://github.com/matterport/Mask_RCNN/pull/38
     ## Implemented save_image visualize.py
     ## To correctly install m-rcnn, see notes - mask-rcnn dependecies notes.txt
     
-    SIZE = 512 #Resize to same size as training images
+    SIZE = 1024 #Resize to same size as training images
     img_path = IMAGE_DIR+filename
+    print("################################################################################")
+    print("##### img_path: ",img_path)
+    print("################################################################################")
     # image = np.asarray(Image.open(img_path).resize((SIZE,SIZE)))
     # image = skimage.io.imread(os.path.join(img_path)).resize((SIZE,SIZE))
     image = skimage.io.imread(os.path.join(img_path))
-    image_name = filename
+    image_name = filename[:-4]+"_res"
 
     # Perform a forward pass of the network to obtain the results
     # r = model.detect([image], verbose=0) 
     print("Performing forward pass of the network")   
     results = model.detect([image], verbose=1)
     # # Get the results for the first image.
-    # r = results[0]
+    r = results[0]
 
-    # print("Visualize & save image")
-    # mrcnn.visualize.save_image(
-    #     image, 
-    #     image_name, 
-    #     r['rois'], 
-    #     r['masks'],
-    #     r['class_ids'],
-    #     r['scores'],
-    #     CLASS_NAMES,
-    #     scores_thresh=0.6,
-    #     save_dir=SAVE_RES_DIR,
-    #     mode=0)
+    print("Visualize & save image")
+    mrcnn.visualize.save_image(
+        image, 
+        image_name, 
+        r['rois'], 
+        r['masks'],
+        r['class_ids'],
+        r['scores'],
+        CLASS_NAMES,
+        scores_thresh=0.6,
+        save_dir=SAVE_RES_DIR,
+        mode=0)
 
-    result_img_url = SAVE_RES_DIR+image_name
+    result_img_url = os.path.join(  "static/ai_images/chd-mrcnn/results",image_name) 
 
+    print("################################################################################")
     print("result_img_url: ",result_img_url)
+    print("################################################################################")
 
-    patient_sten_pred_dict = {
-        "results_img_url": result_img_url
-    }
+    patient_sten_pred_dict = image_name
     return patient_sten_pred_dict
 
 
@@ -218,3 +229,5 @@ def getCancerPrediction(filename):
     pred_class = le.inverse_transform([np.argmax(pred)])[0]
     print("Diagnosis is:", pred_class)
     return pred_class
+
+
