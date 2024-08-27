@@ -12,3 +12,12 @@
 	• Install dependencies from requirements.txt file
 		○ activate virtual env: yha_venv\scripts\activate
 		○ pip install -r requirements.txt
+	• Install Flask
+		○ pip install flask
+	• With env activated
+		○ flask_run
+		or
+		○ python run.py
+
+
+		pip install -r requirements-wsl.txt 
