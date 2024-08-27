@@ -2,7 +2,7 @@ import os
 from flask import (jsonify, request)
 from flask_login import current_user
 from yourheartai_api import db
-from yourheartai_api.ai_models.utils import getCancerPrediction
+from yourheartai_api.ai_models.utils import getCancerPrediction, getStenosisPrediction, getCHDPrediction
 from yourheartai_api.models import Post, User
 from datetime import datetime
 
@@ -19,12 +19,13 @@ from yourheartai_api.ai_models.AISchema import (
 
 ai_models = Blueprint('ai_models', __name__, url_prefix="/api/yha")
 
-@ai_models.route("/ai-prediction/cvd-cnn", methods=["POST"])
+@ai_models.route("/ai-prediction/cvd-mrcnn", methods=["POST"])
 class GetCvdCnnPrediction(MethodView):
     @jwt_required()
     ## TODO: Update AI Schemas to match incoming data etc...
-    # @ai_models.arguments(YHANewPostSchema, location="query")
+    # @ai_models.arguments(YHANewPostSchema, location="query")    
     def post(self):
+        print("Routing working")
         current_user_id = get_jwt_identity()
         user = User.query.filter_by(id=current_user_id).first() 
         current_user_jwt = user 
@@ -52,7 +53,7 @@ class GetCvdCnnPrediction(MethodView):
                 return response, 403
             if file:
                 aiFilename = secure_filename(file.filename)  #Use this werkzeug method to secure filename. 
-                path = current_app.root_path+'\\static\\ai_images\\cancer'
+                path = current_app.root_path+'\\static\\ai_images\\chd-mrcnn\\raw'
 
 
                 date_time = now.strftime("%Y%m%d_%H%M%S")
@@ -67,15 +68,16 @@ class GetCvdCnnPrediction(MethodView):
                 if not isExist:
                     os.makedirs(path)
                 elif isExist:                
-                    file.save(os.path.join(current_app.root_path, 'static/ai_images/cancer', aiFilename))
+                    file.save(os.path.join(current_app.root_path, 'static/ai_images/chd-mrcnn/raw', aiFilename))
 
                 #getCancerPrediction(filename)
-                label = getCancerPrediction(aiFilename)
+                # label = getCancerPrediction(aiFilename)
+                stenPred =  getStenosisPrediction(aiFilename)
 
-                image_file = url_for('static', filename='ai_images/cancer/' + aiFilename)
+                image_file = url_for('static', filename='/ai_images/chd-mrcnn/raw/' + aiFilename)
                 
                 resultsJson = {
-                    "prediction": label,
+                    # "prediction": label,
                     "image_url": image_file
                 }
                                 

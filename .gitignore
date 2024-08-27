@@ -28,3 +28,5 @@ instance/weasyprint.log
 *code-workspace
 queries/
 pipreqs ssl (does not work,might do in future).txt
+test_images/
+gputest.py
