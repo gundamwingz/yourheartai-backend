@@ -10,7 +10,6 @@ build/
 *.egg-info/
 .env
 ssl/
-.flaskenv
 setup.py
 yourheartai_api/static/profile_pics/*
 yourheartai_api/static/ai_images/*

@@ -1,0 +1,6 @@
+#.flaskenv
+FLASK_APP=yourheartai_api
+FLASK_ENV=development
+FLASK_DEBUG=1
+FLASK_RUN_PORT=5008
+FLASK_RUN_HOST=0.0.0.0
