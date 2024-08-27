@@ -11,7 +11,6 @@ build/
 .env
 ssl/
 .flaskenv
-run.py
 setup.py
 yourheartai_api/static/profile_pics/*
 yourheartai_api/static/ai_images/*
