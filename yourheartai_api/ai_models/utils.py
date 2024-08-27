@@ -132,7 +132,7 @@ def getStenosisPrediction(filename):
     result_img_url = os.path.join(  "static/ai_images/chd-mrcnn/results",image_name) 
 
     print("################################################################################")
-    print("result_img_url: ",result_img_url)
+    # print("result_img_url: ",result_img_url)
     print("################################################################################")
 
     patient_sten_pred_dict = image_name
