@@ -54,16 +54,17 @@ class YHAUserAccountSchema(Schema):
     role = fields.String(required=True)
     username = fields.String(required=True)
     token = fields.String(required=True)
-
+ 
 class YHAUserAccountDataSchema(Schema):
     data = fields.Nested(YHAUserAccountSchema, required=False, default={})
-
+    
 class YHAPasswordUpdateSchema(Schema):
     password = fields.String(required=True)
     oldPassword = fields.String(required=True)
+
 class YHAPasswordUpdateDataSchema(Schema):
     data = fields.Nested(YHAPasswordUpdateSchema, required=False, default={})
-    
+
 class YHAPasswordResetSchema(Schema):
     email = fields.String(required=True)
     YHAurl = fields.String(required=True)

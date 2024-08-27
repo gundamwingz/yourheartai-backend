@@ -141,6 +141,19 @@ def getStenosisPrediction(filename):
 
 
 def getCHDPrediction(patientData): 
+    age = patientData["age"]
+    gender = patientData["gender"]
+    chestPain = patientData["chestPain"]
+    restingBP = patientData["restingBP"]
+    serumCholestrol = patientData["serumCholestrol"]
+    fastingBloodSugar = patientData["fastingBloodSugar"]
+    restingRElectro = patientData["restingRElectro"]
+    maxHeartRate = patientData["maxHeartRate"]
+    exerciseAngia = patientData["exerciseAngia"]
+    oldPeak = patientData["oldPeak"]
+    slope = patientData["slope"]
+    noOfMajorVessels = patientData["noOfMajorVessels"]
+
     #load model
     model_mlp = load_model("model/cvd/chd_mlp/CHD-MLP-Regression_300e.h5")
 
