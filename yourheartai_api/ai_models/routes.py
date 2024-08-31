@@ -197,6 +197,7 @@ class UserAccount(MethodView):
     @ai_models.arguments(YHAPatientDataSchema, location="json")
     @jwt_required()
     def post(self, args): 
+        print("Route activated API side")
         data = args["data"]        
         data = json.loads(json.dumps(data))  
 
@@ -217,7 +218,7 @@ class UserAccount(MethodView):
         user = User.query.filter_by(id=current_user_id).first()
         current_user_jwt = user
 
-        getCHDPrediction(data)
+        patientChdPred = getCHDPrediction(data)
 
         ## TODO: Code below is to commit latest Patient data to db. Currently not implemented
         try:
@@ -240,6 +241,16 @@ class UserAccount(MethodView):
             current_user_jwt.noOfMajorVessels = noOfMajorVessels 
             
             # db.session.commit()# no database to commit
-            return jsonify("CHD Prediction"), 200
+
+            response_json = {
+            "chd_probability": str(patientChdPred["chd_probability"]),
+            "risk_Category": patientChdPred["risk_Category"],
+            'message': "Success, see baseline prediction!"
+            }
+            
+            print("response_json: ",response_json)
+
+            response = jsonify(response_json)
+            return response, 200
         except:
             return jsonify("Failed"), 500

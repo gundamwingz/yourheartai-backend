@@ -35,7 +35,8 @@ import cv2
 import skimage
 import matplotlib.pyplot as plt
 from mrcnn.visualize import save_image
-from flask import url_for, current_app
+from flask import url_for, current_app, jsonify
+
 
 def getStenosisPrediction(filename):   
     
@@ -154,12 +155,36 @@ def getCHDPrediction(patientData):
     slope = patientData["slope"]
     noOfMajorVessels = patientData["noOfMajorVessels"]
 
-    #load model
-    model_mlp = load_model("model/cvd/chd_mlp/CHD-MLP-Regression_300e.h5")
+    patientData_arr = []
+    patientData_arr.append(age)
+    patientData_arr.append(gender)
+    patientData_arr.append(chestPain)
+    patientData_arr.append(restingBP)
+    patientData_arr.append(serumCholestrol)
+    patientData_arr.append(fastingBloodSugar)
+    patientData_arr.append(restingRElectro)
+    patientData_arr.append(maxHeartRate)
+    patientData_arr.append(exerciseAngia)
+    patientData_arr.append(oldPeak)
+    patientData_arr.append(slope)
+    patientData_arr.append(noOfMajorVessels)
 
-    #load Datafram with mean and standard devs to scale patientData - df.describ()
-    Desc_Data_file = "model/cvd/chd_mlp/CHD-DataFrame-Desc.csv"
-    desc_df = read_csv(Desc_Data_file, delim_whitespace=False)
+    print("################################################################################")
+    print("patientData: ",patientData_arr)
+    print("################################################################################")
+
+    #load model
+    KERAS_FILENAME = "CHD-MLP-Regression_250e.keras"
+    MODEL_DIR = os.path.join(current_app.root_path,"ai_models/cvd/chd_mlp",KERAS_FILENAME) 
+    model_mlp = load_model(MODEL_DIR)
+
+    TFLITE_FILE = "CHD-MLP-Regression_250e.tflite"
+    TFMODEL_DIR = os.path.join(current_app.root_path,"ai_models/cvd/chd_mlp",TFLITE_FILE) 
+    
+    #load Dataframe with mean and standard devs to scale patientData - df.describ()
+    DATAFRAME_FILE = "CHD-DataFrame-Desc.csv"
+    Desc_Data_file = os.path.join(current_app.root_path,"ai_models/cvd/chd_mlp",DATAFRAME_FILE)
+    desc_df = read_csv(Desc_Data_file, delim_whitespace=False) 
 
     ### Dataframe row descriptions strs ### 
     #row 0 - count
@@ -171,23 +196,42 @@ def getCHDPrediction(patientData):
     #row 6 - 75%
     #row 7 - max
     ### Dataframe row descriptions ends ###
-
+    
     mean_n_train = desc_df.loc[1,:]
     std_n_train = desc_df.loc[2,:]
 
     #add patient data array to panda
-    patientData_np = np.array(patientData)
+    patientData_np = np.array(patientData_arr)
     # Transform the data
     patientData_scaled = (patientData_np-mean_n_train)/std_n_train
     ## Reshape input data
     patientData_scaled_rs = patientData_scaled.values.reshape(1,12) 
 
-    ## Predict Patient input data
-    patientPred = model_mlp.predict(patientData_scaled_rs)
-    print("Patient Predicted values are: \n", patientPred)    
+    ################################################################################
+    #TFLite Inference
+    interpreter = tf.lite.Interpreter(model_path=TFMODEL_DIR)
+    interpreter.allocate_tensors()
+
+    input_index = interpreter.get_input_details()[0]["index"]
+    output_index = interpreter.get_output_details()[0]["index"]
+
+    input_data = np.array(patientData_scaled_rs, dtype=np.float32)
+    print("patientData_scaled_rs:",patientData_scaled_rs)
+    interpreter.set_tensor(input_index, input_data)
+    interpreter.invoke()
+
+    ## TFlite Predict Patient input data
+    patientPred_tf = interpreter.get_tensor(output_index)
+    # print("TFlite - Patient Predicted values are: \n", patientPred_tf)
+    ################################################################################
+
+    # Predict Patient input data
+    # patientPred = model_mlp.predict(patientData_scaled_rs)
+    # print("Patient Predicted values are: \n", patientPred)    
 
     ##### Threshold for CHD risk #####
-    chd_pred = patientPred[0][0]
+    # chd_pred = patientPred[0][0]
+    chd_pred = patientPred_tf[0][0]
 
     if chd_pred > 1:
         chd_pred = .999 #risk prediction cannot be 100%
@@ -195,23 +239,23 @@ def getCHDPrediction(patientData):
         chd_pred = 0
 
     #CHD Risk Grading
+    # https://my.clevelandclinic.org/health/articles/17085-heart-risk-factor-calculators
     risk_category = ""
 
     if 0 <= chd_pred <= 0.25: # and round(value,2)==value:
-        risk_category = "low risk"      
+        risk_category = "Low"      
     elif 0.25 <= chd_pred <= 0.5: # and round(value,2)==value:
-        risk_category = "mid risk"      
+        risk_category = "Borderline"      
     elif 0.5 <= chd_pred <= 0.75: # and round(value,2)==value:
-        risk_category = "high risk"      
+        risk_category = "Intermediate"      
     elif 0.75 <= chd_pred <= 1: # and round(value,2)==value:
-        risk_category = "Very high risk"      
+        risk_category = "High"      
 
     chd_pred = round(chd_pred, 4)
     patient_pred_dict = {
-        "CHD Probability": chd_pred,
-        "Risk Category": risk_category
+        "chd_probability": chd_pred,
+        "risk_Category": risk_category
         }
-    
     return patient_pred_dict
 
 
