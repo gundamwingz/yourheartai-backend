@@ -25,10 +25,6 @@ def send_reset_email(user, url):
     token = user.get_reset_token()
     print('token: ',token)
     YHAurl = url+""+ token
-    # print("YHAurl 1: ",YHAurl)
-    # YHAurl = "http://localhost:4401/" +""+ token
-    # print("YHAurl 2: ",YHAurl)
-
     msg = Message('Password Reset Request',
                   sender='noreply@yourheartai.com',
                   recipients=[user.email])

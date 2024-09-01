@@ -27,14 +27,6 @@ class GetCvdCnnPrediction(MethodView):
     ## TODO: Update AI Schemas to match incoming data etc...
     # @ai_models.arguments(YHANewPostSchema, location="query")    
     def post(self):
-        print("Routing working")
-        
-        # ai_img_raw_dir = "./yourheartai_api/static/ai_images/chd-mrcnn/raw"
-        # ai_img_res_dir = "./yourheartai_api/static/ai_images/chd-mrcnn/results"
-        # if not os.path.exists(ai_img_raw_dir):
-        #     os.makedirs(ai_img_raw_dir)
-        # if not os.path.exists(ai_img_res_dir):
-        #     os.makedirs(ai_img_res_dir)
 
         current_user_id = get_jwt_identity()
         user = User.query.filter_by(id=current_user_id).first() 
