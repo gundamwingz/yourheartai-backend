@@ -327,7 +327,6 @@ class UserAccountImage(MethodView):
             return response, 404 
         
         # data = dict(request.files)
-        # print("data: ",data)
         file = request.files.get('file')
 
         current_user_id = get_jwt_identity()
